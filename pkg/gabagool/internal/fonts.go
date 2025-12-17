@@ -1,10 +1,15 @@
 package internal
 
 import (
+	_ "embed"
 	"os"
 
+	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
+
+//go:embed embedded_fonts/font.ttf
+var embeddedFont []byte
 
 type FontSizes struct {
 	XLarge int `json:"xlarge" yaml:"xlarge"`
@@ -98,27 +103,31 @@ func loadFont(path string, fallback string, size int) *ttf.Font {
 	var font *ttf.Font
 	var err error
 
-	if path == "" {
-		if fallback == "" {
-			GetInternalLogger().Error("Both font path and fallback are empty", "size", size)
-			os.Exit(1)
+	if path != "" {
+		font, err = ttf.OpenFont(path, size)
+		if err == nil {
+			return font
 		}
-		path = fallback
+		GetInternalLogger().Debug("Failed to load theme font, trying fallback", "path", path, "error", err)
 	}
 
-	font, err = ttf.OpenFont(path, size)
-	if err == nil {
-		return font
+	if fallback != "" {
+		font, err = ttf.OpenFont(fallback, size)
+		if err == nil {
+			return font
+		}
+		GetInternalLogger().Debug("Failed to load fallback font, using embedded font", "fallback", fallback, "error", err)
 	}
 
-	if fallback == "" || fallback == path {
-		GetInternalLogger().Error("Failed to load font", "path", path, "size", size, "error", err)
+	rw, err := sdl.RWFromMem(embeddedFont)
+	if err != nil {
+		GetInternalLogger().Error("Failed to create RW from embedded font", "size", size, "error", err)
 		os.Exit(1)
 	}
 
-	font, err = ttf.OpenFont(fallback, size)
+	font, err = ttf.OpenFontRW(rw, 1, size)
 	if err != nil {
-		GetInternalLogger().Error("Failed to load font and fallback", "path", path, "fallback", fallback, "size", size, "error", err)
+		GetInternalLogger().Error("Failed to load embedded font", "size", size, "error", err)
 		os.Exit(1)
 	}
 
