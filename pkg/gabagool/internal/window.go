@@ -37,6 +37,7 @@ func initWindowWithSize(title string, width, height int32, displayBackground boo
 	x, y := int32(0), int32(0)
 
 	if constants.IsDevMode() {
+		x, y = int32(50), int32(50)
 		if v := os.Getenv("WINDOW_WIDTH"); v != "" {
 			if n, err := strconv.ParseInt(v, 10, 32); err == nil {
 				width = int32(n)

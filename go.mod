@@ -9,3 +9,5 @@ require (
 	go.uber.org/atomic v1.11.0
 	golang.org/x/text v0.32.0
 )
+
+require github.com/BurntSushi/toml v1.5.0 // indirect

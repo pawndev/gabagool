@@ -3,6 +3,7 @@ package i18n
 import (
 	"encoding/json"
 
+	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
@@ -17,6 +18,7 @@ type I18N struct {
 func InitI18N(messageFilePaths []string) error {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 
 	for _, messageFile := range messageFilePaths {
 		_, err := bundle.LoadMessageFile(messageFile)
