@@ -184,8 +184,11 @@ func List(options ListOptions) (*ListResult, error) {
 		sdl.Delay(16)
 	}
 
+	// Update result with final item order (in case items were reordered)
+	result.Items = lc.Options.Items
+
 	if cancelled {
-		return nil, ErrCancelled
+		return &result, ErrCancelled
 	}
 
 	return &result, nil
@@ -313,6 +316,8 @@ func (lc *listController) handleActionButtons(button constants.VirtualButton, ru
 		if !lc.Options.DisableBackButton {
 			*running = false
 			*cancelled = true
+			// Update result with current item order before cancelling
+			result.Items = lc.Options.Items
 		}
 	}
 
