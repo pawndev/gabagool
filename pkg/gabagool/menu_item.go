@@ -5,6 +5,7 @@ type MenuItem struct {
 	Selected           bool
 	Focused            bool
 	NotMultiSelectable bool
+	NotReorderable     bool
 	Metadata           interface{}
 	ImageFilename      string
 	BackgroundFilename string

@@ -373,7 +373,8 @@ func (lc *listController) handleActionButtons(button constants.VirtualButton, ru
 	}
 
 	if lc.Options.ReorderButton != constants.VirtualButtonUnassigned &&
-		button == lc.Options.ReorderButton && len(lc.Options.Items) > 0 {
+		button == lc.Options.ReorderButton && len(lc.Options.Items) > 0 &&
+		!lc.Options.Items[lc.Options.SelectedIndex].NotReorderable {
 		lc.ReorderMode = !lc.ReorderMode
 	}
 }
@@ -498,6 +499,11 @@ func (lc *listController) moveItemOneStep(direction int) bool {
 			return false
 		}
 		targetIndex = currentIndex - 1
+	}
+
+	// Check if either item is marked as not reorderable
+	if lc.Options.Items[currentIndex].NotReorderable || lc.Options.Items[targetIndex].NotReorderable {
+		return false
 	}
 
 	// Swap items
