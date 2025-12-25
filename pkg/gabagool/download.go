@@ -1,7 +1,6 @@
 package gabagool
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -347,8 +346,7 @@ func (dm *downloadManager) downloadFile(job *downloadJob) {
 	// Clone the default transport to preserve certifiable's root CA configuration
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 
-	// Apply custom settings
-	transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper) // Disable HTTP/2
+	// Apply custom pooling and timeout settings
 	transport.MaxIdleConns = 100
 	transport.IdleConnTimeout = 90 * time.Second
 	transport.MaxIdleConnsPerHost = 10
