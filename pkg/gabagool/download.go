@@ -344,14 +344,14 @@ func (dm *downloadManager) downloadFile(job *downloadJob) {
 		}
 	}
 
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{},
-		// Disable HTTP/2... apparently improves download performance
-		TLSNextProto:        make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
-		MaxIdleConns:        100,
-		IdleConnTimeout:     90 * time.Second,
-		MaxIdleConnsPerHost: 10,
-	}
+	// Clone the default transport to preserve certifiable's root CA configuration
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+
+	// Apply custom settings
+	transport.TLSNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper) // Disable HTTP/2
+	transport.MaxIdleConns = 100
+	transport.IdleConnTimeout = 90 * time.Second
+	transport.MaxIdleConnsPerHost = 10
 
 	client := &http.Client{
 		Timeout:   job.timeout,
