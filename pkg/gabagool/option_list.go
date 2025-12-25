@@ -40,10 +40,13 @@ type Option struct {
 }
 
 type OptionListSettings struct {
-	InitialSelectedIndex int
-	DisableBackButton    bool
-	FooterHelpItems      []FooterHelpItem
-	HelpExitText         string
+	InitialSelectedIndex  int
+	DisableBackButton     bool
+	FooterHelpItems       []FooterHelpItem
+	HelpExitText          string
+	ActionButton          constants.VirtualButton
+	SecondaryActionButton constants.VirtualButton
+	ConfirmButton         constants.VirtualButton // Default: VirtualButtonStart
 }
 
 // ItemWithOptions represents a menu item with multiple choices.
@@ -68,23 +71,28 @@ func (iow *ItemWithOptions) Value() interface{} {
 // OptionsListResult represents the return value of the OptionsList function.
 // Items is the entire list of menu items.
 // Selected is the index of the selected item.
+// Action is the action taken when exiting (Selected, Triggered, SecondaryTriggered, or Confirmed).
 type OptionsListResult struct {
 	Items    []ItemWithOptions
 	Selected int
+	Action   ListAction
 }
 type internalOptionsListSettings struct {
-	Margins           internal.Padding
-	ItemSpacing       int32
-	InputDelay        time.Duration
-	Title             string
-	TitleAlign        constants.TextAlign
-	TitleSpacing      int32
-	ScrollSpeed       float32
-	ScrollPauseTime   int
-	FooterHelpItems   []FooterHelpItem
-	FooterTextColor   sdl.Color
-	DisableBackButton bool
-	HelpExitText      string
+	Margins               internal.Padding
+	ItemSpacing           int32
+	InputDelay            time.Duration
+	Title                 string
+	TitleAlign            constants.TextAlign
+	TitleSpacing          int32
+	ScrollSpeed           float32
+	ScrollPauseTime       int
+	FooterHelpItems       []FooterHelpItem
+	FooterTextColor       sdl.Color
+	DisableBackButton     bool
+	HelpExitText          string
+	ActionButton          constants.VirtualButton
+	SecondaryActionButton constants.VirtualButton
+	ConfirmButton         constants.VirtualButton
 }
 
 type optionsListController struct {
@@ -127,6 +135,7 @@ func defaultOptionsListSettings(title string) internalOptionsListSettings {
 		ScrollPauseTime: 25,
 		FooterTextColor: sdl.Color{R: 180, G: 180, B: 180, A: 255},
 		FooterHelpItems: []FooterHelpItem{},
+		ConfirmButton:   constants.VirtualButtonStart,
 	}
 }
 
@@ -216,6 +225,13 @@ func OptionsList(title string, listOptions OptionListSettings, items []ItemWithO
 	optionsListController.Settings.FooterHelpItems = listOptions.FooterHelpItems
 	optionsListController.Settings.DisableBackButton = listOptions.DisableBackButton
 	optionsListController.Settings.HelpExitText = listOptions.HelpExitText
+	optionsListController.Settings.ActionButton = listOptions.ActionButton
+	optionsListController.Settings.SecondaryActionButton = listOptions.SecondaryActionButton
+
+	// Use provided ConfirmButton or default to VirtualButtonStart
+	if listOptions.ConfirmButton != constants.VirtualButtonUnassigned {
+		optionsListController.Settings.ConfirmButton = listOptions.ConfirmButton
+	}
 
 	if listOptions.InitialSelectedIndex > 0 && listOptions.InitialSelectedIndex < len(items) {
 		if optionsListController.SelectedIndex >= 0 && optionsListController.SelectedIndex < len(items) {
@@ -231,6 +247,7 @@ func OptionsList(title string, listOptions OptionListSettings, items []ItemWithO
 	result := OptionsListResult{
 		Items:    items,
 		Selected: -1,
+		Action:   ListActionSelected,
 	}
 
 	var err error
@@ -410,13 +427,6 @@ func (olc *optionsListController) handleOptionsInput(inputEvent *internal.Event,
 		}
 		olc.lastInputTime = time.Now()
 
-	case constants.VirtualButtonStart:
-		if !olc.ShowingHelp && olc.SelectedIndex >= 0 && olc.SelectedIndex < len(olc.Items) {
-			*running = false
-			result.Selected = olc.SelectedIndex
-		}
-		olc.lastInputTime = time.Now()
-
 	case constants.VirtualButtonLeft:
 		if !olc.ShowingHelp {
 			olc.cycleOptionLeft()
@@ -456,6 +466,38 @@ func (olc *optionsListController) handleOptionsInput(inputEvent *internal.Event,
 			olc.lastRepeatTime = time.Now()
 		}
 		olc.lastInputTime = time.Now()
+
+	default:
+		// Handle configurable action buttons
+		if olc.Settings.ConfirmButton != constants.VirtualButtonUnassigned &&
+			inputEvent.Button == olc.Settings.ConfirmButton {
+			if !olc.ShowingHelp && olc.SelectedIndex >= 0 && olc.SelectedIndex < len(olc.Items) {
+				*running = false
+				result.Action = ListActionConfirmed
+				result.Selected = olc.SelectedIndex
+			}
+			olc.lastInputTime = time.Now()
+		}
+
+		if olc.Settings.ActionButton != constants.VirtualButtonUnassigned &&
+			inputEvent.Button == olc.Settings.ActionButton {
+			if !olc.ShowingHelp && olc.SelectedIndex >= 0 && olc.SelectedIndex < len(olc.Items) {
+				*running = false
+				result.Action = ListActionTriggered
+				result.Selected = olc.SelectedIndex
+			}
+			olc.lastInputTime = time.Now()
+		}
+
+		if olc.Settings.SecondaryActionButton != constants.VirtualButtonUnassigned &&
+			inputEvent.Button == olc.Settings.SecondaryActionButton {
+			if !olc.ShowingHelp && olc.SelectedIndex >= 0 && olc.SelectedIndex < len(olc.Items) {
+				*running = false
+				result.Action = ListActionSecondaryTriggered
+				result.Selected = olc.SelectedIndex
+			}
+			olc.lastInputTime = time.Now()
+		}
 	}
 }
 
@@ -542,6 +584,7 @@ func (olc *optionsListController) handleAButton(running *bool, result *OptionsLi
 				olc.showColorPicker(olc.SelectedIndex)
 			case OptionTypeClickable:
 				*running = false
+				result.Action = ListActionSelected
 				result.Selected = olc.SelectedIndex
 			}
 		}

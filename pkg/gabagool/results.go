@@ -12,6 +12,7 @@ const (
 	ListActionSelected ListAction = iota
 	ListActionTriggered
 	ListActionSecondaryTriggered
+	ListActionConfirmed
 )
 
 type DetailAction int
