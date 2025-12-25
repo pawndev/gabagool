@@ -88,6 +88,10 @@ func SetRawLogLevel(level string) {
 	internal.SetRawLogLevel(level)
 }
 
+func SetInputMappingBytes(data []byte) {
+	internal.SetInputMappingBytes(data)
+}
+
 func GetWindow() *internal.Window {
 	return internal.GetWindow()
 }

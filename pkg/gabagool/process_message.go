@@ -1,19 +1,27 @@
 package gabagool
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/png"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool/internal"
+	"github.com/srwiley/oksvg"
+	"github.com/srwiley/rasterx"
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"go.uber.org/atomic"
 )
 
 type ProcessMessageOptions struct {
-	Image               string
-	ImageWidth          int32
-	ImageHeight         int32
+	Image               string // Deprecated: Use ImageBytes instead. File path to image (PNG, JPEG, or SVG)
+	ImageBytes          []byte // Image data loaded from embedded resources (supports PNG, JPEG, and SVG)
+	ImageWidth          int32  // Desired width for rendering (required for SVG, optional for raster images)
+	ImageHeight         int32  // Desired height for rendering (required for SVG, optional for raster images)
 	ShowThemeBackground bool
 	ShowProgressBar     bool
 	Progress            *atomic.Float64
@@ -34,6 +42,9 @@ type processMessage struct {
 
 // ProcessMessage displays a message while executing a function asynchronously.
 // The function is generic and returns the typed result of the function.
+//
+// Supports displaying images in PNG, JPEG, and SVG formats via ImageBytes or Image (legacy).
+// For SVG images, ImageWidth and ImageHeight should be specified for optimal rendering quality.
 func ProcessMessage[T any](message string, options ProcessMessageOptions, fn func() (T, error)) (T, error) {
 	processor := &processMessage{
 		window:          internal.GetWindow(),
@@ -46,11 +57,30 @@ func ProcessMessage[T any](message string, options ProcessMessageOptions, fn fun
 		progress:        options.Progress,
 	}
 
-	if options.Image != "" {
-		img.Init(img.INIT_PNG)
-		texture, err := img.LoadTexture(processor.window.Renderer, options.Image)
+	// Load image from bytes (preferred) or from file path (legacy)
+	if len(options.ImageBytes) > 0 {
+		texture, err := loadImageTexture(processor.window.Renderer, options.ImageBytes, options.ImageWidth, options.ImageHeight)
 		if err == nil {
 			processor.imageTexture = texture
+		}
+	} else if options.Image != "" {
+		// Legacy file path support
+		if strings.HasSuffix(strings.ToLower(options.Image), ".svg") {
+			// Read SVG file
+			svgData, err := os.ReadFile(options.Image)
+			if err == nil {
+				texture, err := loadImageTexture(processor.window.Renderer, svgData, options.ImageWidth, options.ImageHeight)
+				if err == nil {
+					processor.imageTexture = texture
+				}
+			}
+		} else {
+			// Load raster image
+			img.Init(img.INIT_PNG | img.INIT_JPG)
+			texture, err := img.LoadTexture(processor.window.Renderer, options.Image)
+			if err == nil {
+				processor.imageTexture = texture
+			}
 		}
 	}
 
@@ -225,4 +255,82 @@ func (p *processMessage) renderProgressBar(renderer *sdl.Renderer, messageY, spa
 		}
 		percentSurface.Free()
 	}
+}
+
+// isSVG checks if the data is SVG format
+func isSVG(data []byte) bool {
+	// Check for SVG header
+	return bytes.Contains(data[:min(len(data), 512)], []byte("<svg")) ||
+		bytes.Contains(data[:min(len(data), 512)], []byte("<?xml"))
+}
+
+// loadImageTexture loads an image (PNG, JPEG, or SVG) from bytes and creates an SDL texture
+func loadImageTexture(renderer *sdl.Renderer, imageData []byte, width, height int32) (*sdl.Texture, error) {
+	if isSVG(imageData) {
+		return loadSVGTexture(renderer, imageData, width, height)
+	}
+	return loadRasterTexture(renderer, imageData)
+}
+
+// loadRasterTexture loads a raster image (PNG, JPEG, etc.) from bytes
+func loadRasterTexture(renderer *sdl.Renderer, imageData []byte) (*sdl.Texture, error) {
+	img.Init(img.INIT_PNG | img.INIT_JPG)
+	rw, err := sdl.RWFromMem(imageData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create RWops from image data: %w", err)
+	}
+	texture, err := img.LoadTextureRW(renderer, rw, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load texture from image data: %w", err)
+	}
+	return texture, nil
+}
+
+// loadSVGTexture rasterizes an SVG and creates an SDL texture
+func loadSVGTexture(renderer *sdl.Renderer, svgData []byte, width, height int32) (*sdl.Texture, error) {
+	// Parse SVG
+	icon, err := oksvg.ReadIconStream(bytes.NewReader(svgData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse SVG: %w", err)
+	}
+
+	// Determine dimensions
+	svgWidth := int(icon.ViewBox.W)
+	svgHeight := int(icon.ViewBox.H)
+
+	// Use provided dimensions, or default to SVG viewBox
+	if width == 0 || height == 0 {
+		width = int32(svgWidth)
+		height = int32(svgHeight)
+	}
+
+	// Create image to render SVG into
+	img := image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
+
+	// Create rasterizer
+	scanner := rasterx.NewScannerGV(int(width), int(height), img, img.Bounds())
+	raster := rasterx.NewDasher(int(width), int(height), scanner)
+
+	// Set the icon to the target size
+	icon.SetTarget(0, 0, float64(width), float64(height))
+
+	// Draw SVG
+	icon.Draw(raster, 1.0)
+
+	// Convert image.RGBA to PNG bytes
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil, fmt.Errorf("failed to encode SVG as PNG: %w", err)
+	}
+
+	// Load the PNG as a texture
+	return loadRasterTexture(renderer, buf.Bytes())
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

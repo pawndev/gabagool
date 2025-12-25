@@ -15,6 +15,11 @@ type I18N struct {
 	bundle    *i18n.Bundle
 }
 
+type MessageFile struct {
+	Name    string
+	Content []byte
+}
+
 func InitI18N(messageFilePaths []string) error {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
@@ -34,7 +39,25 @@ func InitI18N(messageFilePaths []string) error {
 	return nil
 }
 
-// SetLanguage changes the language used by the localizer
+func InitI18NFromBytes(messageFiles []MessageFile) error {
+	bundle := i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+
+	for _, messageFile := range messageFiles {
+		_, err := bundle.ParseMessageFileBytes(messageFile.Content, messageFile.Name)
+		if err != nil {
+			return err
+		}
+	}
+
+	localizer := i18n.NewLocalizer(bundle, language.English.String(), language.Spanish.String())
+
+	i = &I18N{localizer: localizer, bundle: bundle}
+
+	return nil
+}
+
 func SetLanguage(lang language.Tag) {
 	localizer := i18n.NewLocalizer(i.bundle, lang.String())
 

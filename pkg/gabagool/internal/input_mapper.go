@@ -11,6 +11,12 @@ import (
 
 const MappingPathEnvVar = "INPUT_MAPPING_PATH"
 
+var inputMappingBytes []byte
+
+func SetInputMappingBytes(data []byte) {
+	inputMappingBytes = data
+}
+
 type Source int
 
 const (
@@ -96,10 +102,20 @@ func DefaultInputMapping() *InputMapping {
 	}
 }
 
-// GetInputMapping returns the input mapping from the environment variable if set,
-// otherwise returns the default mapping
+// GetInputMapping returns the input mapping from embedded bytes if set,
+// from the environment variable if set, otherwise returns the default mapping
 func GetInputMapping() *InputMapping {
 	logger := GetInternalLogger()
+
+	if len(inputMappingBytes) > 0 {
+		mapping, err := LoadInputMappingFromBytes(inputMappingBytes)
+		if err == nil {
+			logger.Info("Loaded custom input mapping from embedded bytes")
+			return mapping
+		}
+		logger.Warn("Failed to load custom input mapping from bytes, trying file path", "error", err)
+	}
+
 	mappingPath := os.Getenv(MappingPathEnvVar)
 	if mappingPath != "" {
 		mapping, err := LoadInputMappingFromJSON(mappingPath)
@@ -117,9 +133,12 @@ func LoadInputMappingFromJSON(filePath string) (*InputMapping, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read JSON file: %w", err)
 	}
+	return LoadInputMappingFromBytes(data)
+}
 
+func LoadInputMappingFromBytes(data []byte) (*InputMapping, error) {
 	var serializableMapping Mapping
-	err = json.Unmarshal(data, &serializableMapping)
+	err := json.Unmarshal(data, &serializableMapping)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
