@@ -718,18 +718,25 @@ func (olc *optionsListController) scrollTo(index int) {
 		return
 	}
 
-	if index >= olc.VisibleStartIndex && index < olc.VisibleStartIndex+olc.MaxVisibleItems {
-		return
+	contextItems := olc.MaxVisibleItems / 4
+	if contextItems < 1 {
+		contextItems = 1
 	}
 
-	if index < olc.VisibleStartIndex {
-		olc.VisibleStartIndex = index
-	} else {
-		olc.VisibleStartIndex = index - olc.MaxVisibleItems + 1
-		if olc.VisibleStartIndex < 0 {
-			olc.VisibleStartIndex = 0
-		}
+	newStart := index - contextItems
+	if newStart < 0 {
+		newStart = 0
 	}
+
+	maxStart := len(olc.Items) - olc.MaxVisibleItems
+	if maxStart < 0 {
+		maxStart = 0
+	}
+	if newStart > maxStart {
+		newStart = maxStart
+	}
+
+	olc.VisibleStartIndex = newStart
 }
 
 func (olc *optionsListController) toggleHelp() {
