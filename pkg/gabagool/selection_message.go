@@ -20,6 +20,8 @@ type SelectionMessageSettings struct {
 	DisableBackButton bool
 	// InitialSelection is the index of the initially selected option (default: 0)
 	InitialSelection int
+	// StatusBar configures the optional status bar in the top-right corner
+	StatusBar StatusBarOptions
 }
 
 // SelectionMessageResult represents the result of a selection message.
@@ -49,6 +51,7 @@ type selectionMessageController struct {
 	backButton        constants.VirtualButton
 	disableBack       bool
 	footerHelpItems   []FooterHelpItem
+	statusBar         StatusBarOptions
 	inputDelay        time.Duration
 	lastInputTime     time.Time
 	confirmed         bool
@@ -76,6 +79,7 @@ func SelectionMessage(message string, options []SelectionOption, footerHelpItems
 		backButton:      settings.BackButton,
 		disableBack:     settings.DisableBackButton,
 		footerHelpItems: footerHelpItems,
+		statusBar:       settings.StatusBar,
 		inputDelay:      constants.DefaultInputDelay,
 		lastInputTime:   time.Now(),
 	}
@@ -236,6 +240,8 @@ func (c *selectionMessageController) render(renderer *sdl.Renderer, window *inte
 
 	optionY := startY + maxMessageHeight + spacing
 	c.renderOptions(renderer, centerX, optionY, optionFont)
+
+	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, c.statusBar, internal.UniformPadding(20))
 
 	renderFooter(
 		renderer,

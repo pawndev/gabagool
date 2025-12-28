@@ -81,6 +81,7 @@ type virtualKeyboard struct {
 	InputDelay       time.Duration
 	lastInputTime    time.Time
 	urlShortcuts     []URLShortcut
+	StatusBar        StatusBarOptions
 
 	heldDirections struct {
 		up, down, left, right bool
@@ -174,6 +175,7 @@ func createKeyboard(windowWidth, windowHeight int32, helpExitText string, layout
 		lastRepeatTime:   time.Now(),
 		repeatDelay:      150 * time.Millisecond,
 		repeatInterval:   50 * time.Millisecond,
+		StatusBar:        DefaultStatusBarOptions(),
 	}
 
 	// Initialize layout-specific keys and rects
@@ -217,6 +219,7 @@ func createURLKeyboard(windowWidth, windowHeight int32, helpExitText string, sho
 		repeatDelay:      150 * time.Millisecond,
 		repeatInterval:   50 * time.Millisecond,
 		urlShortcuts:     shortcuts,
+		StatusBar:        DefaultStatusBarOptions(),
 	}
 
 	// Use 5-row layout if 5 or fewer shortcuts, 6-row layout if more
@@ -1538,6 +1541,7 @@ func (kb *virtualKeyboard) render(renderer *sdl.Renderer, font *ttf.Font) {
 		kb.renderTextInput(renderer, font)
 		kb.renderKeys(renderer, font)
 		kb.renderSpecialKeys(renderer)
+		renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, kb.StatusBar, internal.UniformPadding(20))
 		kb.renderFooter(renderer)
 	}
 
@@ -1703,16 +1707,16 @@ func (kb *virtualKeyboard) renderKeyText(renderer *sdl.Renderer, font *ttf.Font,
 }
 
 func (kb *virtualKeyboard) renderSpecialKeys(renderer *sdl.Renderer) {
-	kb.renderSpecialKey(renderer, kb.BackspaceRect, "←", kb.SelectedSpecial == 1)
-	kb.renderSpecialKey(renderer, kb.EnterRect, "↵", kb.SelectedSpecial == 2)
+	kb.renderSpecialKey(renderer, kb.BackspaceRect, "\U000F030D", kb.SelectedSpecial == 1)
+	kb.renderSpecialKey(renderer, kb.EnterRect, "\U000F0311", kb.SelectedSpecial == 2)
 
 	// Numeric layout only has backspace and enter
 	if kb.Layout == KeyboardLayoutNumeric {
 		return
 	}
 
-	kb.renderSpecialKey(renderer, kb.ShiftRect, "⇧", kb.SelectedSpecial == 4 || kb.CurrentState == upperCase)
-	kb.renderSpecialKey(renderer, kb.SymbolRect, "sym", kb.SelectedSpecial == 5 || kb.CurrentState == symbolsMode)
+	kb.renderSpecialKey(renderer, kb.ShiftRect, "\U000F0636", kb.SelectedSpecial == 4 || kb.CurrentState == upperCase)
+	kb.renderSpecialKey(renderer, kb.SymbolRect, "\U000F030C", kb.SelectedSpecial == 5 || kb.CurrentState == symbolsMode)
 
 	// URL layout has no space key
 	if kb.Layout != KeyboardLayoutURL {

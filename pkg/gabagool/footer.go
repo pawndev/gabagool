@@ -1,11 +1,25 @@
 package gabagool
 
 import (
+	"unicode"
+
 	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool/internal"
 	"github.com/veandco/go-sdl2/gfx"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
+
+// containsExtendedUnicode checks if a string contains characters that need a symbol font
+// (emojis, special symbols, characters outside basic Latin/ASCII)
+func containsExtendedUnicode(s string) bool {
+	for _, r := range s {
+		// Check for symbols, emojis, and other special characters
+		if r > 0x2000 || unicode.IsSymbol(r) || unicode.Is(unicode.So, r) {
+			return true
+		}
+	}
+	return false
+}
 
 // FooterHelpItem represents a button and its help text that should be displayed in the footer.
 // ButtonName is the text that will be displayed in the inner pill.
@@ -28,6 +42,9 @@ func renderFooter(
 	if len(footerHelpItems) == 0 {
 		return
 	}
+
+	symbolFont := internal.Fonts.SmallSymbolFont
+
 	scaleFactor := internal.GetScaleFactor()
 	window := internal.GetWindow()
 	windowWidth, windowHeight := window.Window.GetSize()
@@ -70,32 +87,45 @@ func renderFooter(
 
 	if len(leftItems) > 0 {
 		if len(footerHelpItems) == 1 && centerSingleItem {
-			pillWidth := calculateContinuousPillWidth(font, leftItems, outerPillHeight, innerPillMargin)
+			pillWidth := calculateContinuousPillWidth(font, symbolFont, leftItems, outerPillHeight, innerPillMargin)
 			centerX := (windowWidth - pillWidth) / 2
-			renderGroupAsContinuousPill(renderer, font, leftItems, centerX, y, outerPillHeight, innerPillMargin)
+			renderGroupAsContinuousPill(renderer, font, symbolFont, leftItems, centerX, y, outerPillHeight, innerPillMargin)
 		} else {
-			renderGroupAsContinuousPill(renderer, font, leftItems, bottomPadding, y, outerPillHeight, innerPillMargin)
+			renderGroupAsContinuousPill(renderer, font, symbolFont, leftItems, bottomPadding, y, outerPillHeight, innerPillMargin)
 		}
 	}
 	if len(rightItems) > 0 {
-		rightGroupWidth := calculateContinuousPillWidth(font, rightItems, outerPillHeight, innerPillMargin)
+		rightGroupWidth := calculateContinuousPillWidth(font, symbolFont, rightItems, outerPillHeight, innerPillMargin)
 		rightX := windowWidth - bottomPadding - rightGroupWidth
-		renderGroupAsContinuousPill(renderer, font, rightItems, rightX, y, outerPillHeight, innerPillMargin)
+		renderGroupAsContinuousPill(renderer, font, symbolFont, rightItems, rightX, y, outerPillHeight, innerPillMargin)
 	}
 }
 
-func calculateContinuousPillWidth(font *ttf.Font, items []FooterHelpItem, outerPillHeight, innerPillMargin int32) int32 {
+func calculateContinuousPillWidth(font *ttf.Font, symbolFont *ttf.Font, items []FooterHelpItem, outerPillHeight, innerPillMargin int32) int32 {
 	scaleFactor := internal.GetScaleFactor()
 	var totalWidth = int32(float32(10) * scaleFactor)
 
 	innerPillHeight := outerPillHeight - (innerPillMargin * 2)
 
 	for i, item := range items {
-		buttonSurface, err := font.RenderUTF8Blended(item.ButtonName, internal.GetTheme().MainColor)
+		// Use symbol font for extended unicode in button name
+		buttonFont := font
+		if containsExtendedUnicode(item.ButtonName) {
+			buttonFont = symbolFont
+		}
+
+		buttonSurface, err := buttonFont.RenderUTF8Blended(item.ButtonName, internal.GetTheme().MainColor)
 		if err != nil {
 			continue
 		}
-		helpSurface, err := font.RenderUTF8Blended(item.HelpText, internal.GetTheme().PrimaryAccentColor)
+
+		// Use symbol font for extended unicode in help text
+		helpFont := font
+		if containsExtendedUnicode(item.HelpText) {
+			helpFont = symbolFont
+		}
+
+		helpSurface, err := helpFont.RenderUTF8Blended(item.HelpText, internal.GetTheme().PrimaryAccentColor)
 		if err != nil || helpSurface == nil {
 			buttonSurface.Free()
 			continue
@@ -126,6 +156,7 @@ func calculateInnerPillWidth(buttonSurface *sdl.Surface, innerPillHeight int32) 
 func renderGroupAsContinuousPill(
 	renderer *sdl.Renderer,
 	font *ttf.Font,
+	symbolFont *ttf.Font,
 	items []FooterHelpItem,
 	startX, y,
 	outerPillHeight,
@@ -135,7 +166,7 @@ func renderGroupAsContinuousPill(
 		return
 	}
 	scaleFactor := internal.GetScaleFactor()
-	pillWidth := calculateContinuousPillWidth(font, items, outerPillHeight, innerPillMargin)
+	pillWidth := calculateContinuousPillWidth(font, symbolFont, items, outerPillHeight, innerPillMargin)
 	outerPillRect := &sdl.Rect{
 		X: startX,
 		Y: y,
@@ -157,11 +188,24 @@ func renderGroupAsContinuousPill(
 	rightPadding := int32(float32(30) * paddingFactor)
 
 	for _, item := range items {
-		buttonSurface, err := font.RenderUTF8Blended(item.ButtonName, internal.GetTheme().SecondaryAccentColor)
+		// Use symbol font for extended unicode in button name
+		buttonFont := font
+		if containsExtendedUnicode(item.ButtonName) {
+			buttonFont = symbolFont
+		}
+
+		buttonSurface, err := buttonFont.RenderUTF8Blended(item.ButtonName, internal.GetTheme().SecondaryAccentColor)
 		if err != nil || buttonSurface == nil {
 			continue
 		}
-		helpSurface, err := font.RenderUTF8Blended(item.HelpText, internal.GetTheme().HintInfoColor)
+
+		// Use symbol font for extended unicode in help text
+		helpFont := font
+		if containsExtendedUnicode(item.HelpText) {
+			helpFont = symbolFont
+		}
+
+		helpSurface, err := helpFont.RenderUTF8Blended(item.HelpText, internal.GetTheme().HintInfoColor)
 		if err != nil || helpSurface == nil {
 			buttonSurface.Free()
 			continue

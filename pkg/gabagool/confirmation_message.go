@@ -13,6 +13,7 @@ type MessageOptions struct {
 	ImagePath     string
 	ConfirmButton constants.VirtualButton
 	CancelButton  constants.VirtualButton
+	StatusBar     StatusBarOptions
 }
 
 // ConfirmationResult represents the result of a confirmation message.
@@ -36,6 +37,7 @@ type confirmationMessageSettings struct {
 	FooterHelpItems  []FooterHelpItem
 	FooterTextColor  sdl.Color
 	InputDelay       time.Duration
+	StatusBar        StatusBarOptions
 }
 
 func defaultMessageSettings(message string) confirmationMessageSettings {
@@ -51,6 +53,7 @@ func defaultMessageSettings(message string) confirmationMessageSettings {
 		FooterTextColor:  sdl.Color{R: 180, G: 180, B: 180, A: 255},
 		InputDelay:       constants.DefaultInputDelay,
 		FooterHelpItems:  []FooterHelpItem{},
+		StatusBar:        DefaultStatusBarOptions(),
 	}
 }
 
@@ -76,6 +79,8 @@ func ConfirmationMessage(message string, footerHelpItems []FooterHelpItem, optio
 	if options.CancelButton != constants.VirtualButtonUnassigned {
 		settings.CancelButton = options.CancelButton
 	}
+
+	settings.StatusBar = options.StatusBar
 
 	result := ConfirmationResult{Confirmed: false}
 	lastInputTime := time.Now()
@@ -209,6 +214,8 @@ func renderFrame(renderer *sdl.Renderer, window *internal.Window, settings confi
 			settings.MessageTextColor,
 			constants.TextAlignCenter)
 	}
+
+	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, settings.StatusBar, settings.Margins)
 
 	renderFooter(
 		renderer,

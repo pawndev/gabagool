@@ -35,6 +35,7 @@ type ListOptions struct {
 	FooterText      string
 	FooterTextColor sdl.Color
 	FooterHelpItems []FooterHelpItem
+	StatusBar       StatusBarOptions
 
 	ScrollSpeed     float32
 	ScrollPauseTime int
@@ -73,6 +74,7 @@ func DefaultListOptions(title string, items []MenuItem) ListOptions {
 		HelpButton:            constants.VirtualButtonUnassigned,
 		EmptyMessage:          "No items available",
 		EmptyMessageColor:     sdl.Color{R: 255, G: 255, B: 255, A: 255},
+		StatusBar:             DefaultStatusBarOptions(),
 	}
 }
 
@@ -675,6 +677,8 @@ func (lc *listController) renderContent(window *internal.Window, visibleItems []
 		}
 		itemStartY = lc.renderScrollableTitle(renderer, titleFont, lc.Options.Title, lc.Options.TitleAlign, lc.StartY, lc.Options.Margins.Left+10) + lc.Options.TitleSpacing
 	}
+
+	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, lc.Options.StatusBar, lc.Options.Margins)
 
 	if len(lc.Options.Items) == 0 {
 		lc.renderEmptyMessage(renderer, internal.Fonts.MediumFont, itemStartY)

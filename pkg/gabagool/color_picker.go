@@ -19,6 +19,7 @@ type ColorPicker struct {
 	Visible         bool
 	Colors          []sdl.Color
 	OnColorSelected func(sdl.Color)
+	StatusBar       StatusBarOptions
 }
 
 func NewHexColorPicker(window *internal.Window) *ColorPicker {
@@ -83,6 +84,7 @@ func NewHexColorPicker(window *internal.Window) *ColorPicker {
 		Visible:         true,
 		Colors:          colors,
 		OnColorSelected: nil,
+		StatusBar:       DefaultStatusBarOptions(),
 	}
 }
 
@@ -178,6 +180,8 @@ func (h *ColorPicker) draw(renderer *sdl.Renderer) {
 			renderer.FillRect(&cellRect)
 		}
 	}
+
+	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, h.StatusBar, internal.UniformPadding(20))
 }
 
 func (h *ColorPicker) handleKeyPress(key sdl.Keycode) bool {

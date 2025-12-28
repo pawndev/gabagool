@@ -9,7 +9,10 @@ import (
 )
 
 //go:embed embedded_fonts/font.ttf
-var embeddedFont []byte
+var defaultFont []byte
+
+//go:embed embedded_fonts/SymbolsNerdFont-Regular.ttf
+var symbolFont []byte
 
 type FontSizes struct {
 	XLarge int `json:"xlarge" yaml:"xlarge"`
@@ -41,7 +44,7 @@ type fontsManager struct {
 
 	LargeSymbolFont  *ttf.Font
 	mediumSymbolFont *ttf.Font
-	smallSymbolFont  *ttf.Font
+	SmallSymbolFont  *ttf.Font
 	tinySymbolFont   *ttf.Font
 	microSymbolFont  *ttf.Font
 }
@@ -77,7 +80,6 @@ func initFonts(sizes FontSizes) {
 	screenWidth := GetWindow().GetWidth()
 	fontPath := GetTheme().FontPath
 	fallback := os.Getenv("FALLBACK_FONT")
-	symbolPath := "/mnt/SDCARD/.system/res/font1.ttf"
 
 	// Calculate all sizes
 	calcSize := func(base int) int {
@@ -85,17 +87,18 @@ func initFonts(sizes FontSizes) {
 	}
 
 	Fonts = fontsManager{
-		ExtraLargeFont:   loadFont(fontPath, fallback, calcSize(sizes.XLarge)),
-		LargeFont:        loadFont(fontPath, fallback, calcSize(sizes.Large)),
-		MediumFont:       loadFont(fontPath, fallback, calcSize(sizes.Medium)),
-		SmallFont:        loadFont(fontPath, fallback, calcSize(sizes.Small)),
-		TinyFont:         loadFont(fontPath, fallback, calcSize(sizes.Tiny)),
-		MicroFont:        loadFont(fontPath, fallback, calcSize(sizes.Micro)),
-		LargeSymbolFont:  loadFont(symbolPath, fallback, calcSize(sizes.Large)),
-		mediumSymbolFont: loadFont(symbolPath, fallback, calcSize(sizes.Medium)),
-		smallSymbolFont:  loadFont(symbolPath, fallback, calcSize(sizes.Small)),
-		tinySymbolFont:   loadFont(symbolPath, fallback, calcSize(sizes.Tiny)),
-		microSymbolFont:  loadFont(symbolPath, fallback, calcSize(sizes.Micro)),
+		ExtraLargeFont: loadFont(fontPath, fallback, calcSize(sizes.XLarge)),
+		LargeFont:      loadFont(fontPath, fallback, calcSize(sizes.Large)),
+		MediumFont:     loadFont(fontPath, fallback, calcSize(sizes.Medium)),
+		SmallFont:      loadFont(fontPath, fallback, calcSize(sizes.Small)),
+		TinyFont:       loadFont(fontPath, fallback, calcSize(sizes.Tiny)),
+		MicroFont:      loadFont(fontPath, fallback, calcSize(sizes.Micro)),
+
+		LargeSymbolFont:  loadEmbeddedFont(symbolFont, calcSize(sizes.Large)),
+		mediumSymbolFont: loadEmbeddedFont(symbolFont, calcSize(sizes.Medium)),
+		SmallSymbolFont:  loadEmbeddedFont(symbolFont, calcSize(sizes.Small)),
+		tinySymbolFont:   loadEmbeddedFont(symbolFont, calcSize(sizes.Tiny)),
+		microSymbolFont:  loadEmbeddedFont(symbolFont, calcSize(sizes.Micro)),
 	}
 }
 
@@ -119,13 +122,17 @@ func loadFont(path string, fallback string, size int) *ttf.Font {
 		GetInternalLogger().Debug("Failed to load fallback font, using embedded font", "fallback", fallback, "error", err)
 	}
 
-	rw, err := sdl.RWFromMem(embeddedFont)
+	return loadEmbeddedFont(defaultFont, size)
+}
+
+func loadEmbeddedFont(bytes []byte, size int) *ttf.Font {
+	rw, err := sdl.RWFromMem(bytes)
 	if err != nil {
 		GetInternalLogger().Error("Failed to create RW from embedded font", "size", size, "error", err)
 		os.Exit(1)
 	}
 
-	font, err = ttf.OpenFontRW(rw, 1, size)
+	font, err := ttf.OpenFontRW(rw, 1, size)
 	if err != nil {
 		GetInternalLogger().Error("Failed to load embedded font", "size", size, "error", err)
 		os.Exit(1)
@@ -143,7 +150,7 @@ func closeFonts() {
 
 	Fonts.LargeSymbolFont.Close()
 	Fonts.mediumSymbolFont.Close()
-	Fonts.smallSymbolFont.Close()
+	Fonts.SmallSymbolFont.Close()
 	Fonts.tinySymbolFont.Close()
 	Fonts.microSymbolFont.Close()
 }

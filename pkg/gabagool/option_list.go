@@ -50,6 +50,7 @@ type OptionListSettings struct {
 	ActionButton          constants.VirtualButton
 	SecondaryActionButton constants.VirtualButton
 	ConfirmButton         constants.VirtualButton // Default: VirtualButtonStart
+	StatusBar             StatusBarOptions
 }
 
 // ItemWithOptions represents a menu item with multiple choices.
@@ -98,6 +99,7 @@ type internalOptionsListSettings struct {
 	ActionButton          constants.VirtualButton
 	SecondaryActionButton constants.VirtualButton
 	ConfirmButton         constants.VirtualButton
+	StatusBar             StatusBarOptions
 }
 
 type optionsListController struct {
@@ -141,6 +143,7 @@ func defaultOptionsListSettings(title string) internalOptionsListSettings {
 		FooterTextColor: sdl.Color{R: 180, G: 180, B: 180, A: 255},
 		FooterHelpItems: []FooterHelpItem{},
 		ConfirmButton:   constants.VirtualButtonStart,
+		StatusBar:       DefaultStatusBarOptions(),
 	}
 }
 
@@ -232,6 +235,7 @@ func OptionsList(title string, listOptions OptionListSettings, items []ItemWithO
 	optionsListController.Settings.HelpExitText = listOptions.HelpExitText
 	optionsListController.Settings.ActionButton = listOptions.ActionButton
 	optionsListController.Settings.SecondaryActionButton = listOptions.SecondaryActionButton
+	optionsListController.Settings.StatusBar = listOptions.StatusBar
 
 	// Use provided ConfirmButton or default to VirtualButtonStart
 	if listOptions.ConfirmButton != constants.VirtualButtonUnassigned {
@@ -779,7 +783,7 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 
 	scaleFactor := internal.GetScaleFactor()
 	window := internal.GetWindow()
-	titleFont := internal.Fonts.LargeSymbolFont
+	titleFont := internal.Fonts.LargeFont
 	font := internal.Fonts.SmallFont
 
 	itemSpacing := int32(float32(60) * scaleFactor)
@@ -815,6 +819,8 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 			}
 		}
 	}
+
+	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, olc.Settings.StatusBar, olc.Settings.Margins)
 
 	olc.MaxVisibleItems = int(olc.calculateMaxVisibleItems(window))
 	visibleCount := min(olc.MaxVisibleItems, len(olc.Items)-olc.VisibleStartIndex)

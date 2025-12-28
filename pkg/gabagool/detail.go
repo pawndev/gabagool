@@ -46,6 +46,7 @@ type DetailScreenOptions struct {
 	MaxImageWidth       int32
 	ShowScrollbar       bool
 	ShowThemeBackground bool
+	StatusBar           StatusBarOptions
 }
 
 // DetailScreenResult represents the result of the DetailScreen component.
@@ -446,6 +447,8 @@ func (s *detailScreenState) render() {
 
 	currentY := s.renderTitle(margins)
 	currentY, totalContentHeight := s.renderSections(margins, currentY, safeAreaHeight)
+
+	renderStatusBar(s.renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, s.options.StatusBar, margins)
 
 	s.updateScrollLimits(totalContentHeight, safeAreaHeight, margins)
 	s.renderScrollbar(safeAreaHeight)

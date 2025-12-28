@@ -110,3 +110,82 @@ func GetPluralString(key string, count int) string {
 	}
 	return msg
 }
+
+// Message is an alias for i18n.Message to avoid requiring users to import go-i18n directly
+type Message = i18n.Message
+
+// Localize retrieves a localized string using the go-i18n struct pattern.
+// The DefaultMessage provides the message ID and fallback text.
+// If a translation exists for the current locale, it will be used; otherwise the default is returned.
+//
+// Example usage:
+//
+//	i18n.Localize(&i18n.Message{
+//	    ID:    "greeting",
+//	    Other: "Hello, World!",
+//	}, nil)
+//
+// With template data:
+//
+//	i18n.Localize(&i18n.Message{
+//	    ID:    "welcome_user",
+//	    Other: "Welcome, {{.Name}}!",
+//	}, map[string]interface{}{"Name": "Alice"})
+func Localize(message *Message, templateData map[string]interface{}) string {
+	if message == nil {
+		return "I18N Error: nil message"
+	}
+
+	config := &i18n.LocalizeConfig{
+		DefaultMessage: message,
+	}
+
+	if templateData != nil {
+		config.TemplateData = templateData
+	}
+
+	msg, err := i.localizer.Localize(config)
+	if err != nil {
+		// Fallback to the default message's Other field
+		if message.Other != "" {
+			return message.Other
+		}
+		return "I18N Error"
+	}
+	return msg
+}
+
+// LocalizePlural retrieves a localized string with plural support using the struct pattern.
+// The count determines which plural form to use (One, Few, Many, Other, etc.)
+//
+// Example usage:
+//
+//	i18n.LocalizePlural(&i18n.Message{
+//	    ID:    "items_count",
+//	    One:   "{{.Count}} item",
+//	    Other: "{{.Count}} items",
+//	}, 5, map[string]interface{}{"Count": 5})
+func LocalizePlural(message *Message, count int, templateData map[string]interface{}) string {
+	if message == nil {
+		return "I18N Error: nil message"
+	}
+
+	config := &i18n.LocalizeConfig{
+		DefaultMessage: message,
+		PluralCount:    count,
+	}
+
+	if templateData != nil {
+		config.TemplateData = templateData
+	}
+
+	msg, err := i.localizer.Localize(config)
+	if err != nil {
+		// Fallback to the default message
+		if message.Other != "" {
+			return message.Other
+		}
+		return "I18N Error"
+	}
+	return msg
+}
