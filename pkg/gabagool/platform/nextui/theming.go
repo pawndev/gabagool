@@ -14,15 +14,15 @@ import (
 )
 
 var defaultTheme = internal.Theme{
-	MainColor:             internal.HexToColor(0xFFFFFF),
-	PrimaryAccentColor:    internal.HexToColor(0x9B2257),
-	SecondaryAccentColor:  internal.HexToColor(0x1E2329),
-	HintInfoColor:         internal.HexToColor(0xFFFFFF),
-	ListTextColor:         internal.HexToColor(0xFFFFFF),
-	ListTextSelectedColor: internal.HexToColor(0x000000),
-	BGColor:               internal.HexToColor(0x000000),
-	FontPath:              "",
-	BackgroundImagePath:   "/mnt/SDCARD/bg.png",
+	HighlightColor:       internal.HexToColor(0xFFFFFF),
+	AccentColor:          internal.HexToColor(0x9B2257),
+	ButtonLabelColor:     internal.HexToColor(0x1E2329),
+	HintColor:            internal.HexToColor(0xFFFFFF),
+	TextColor:            internal.HexToColor(0xFFFFFF),
+	HighlightedTextColor: internal.HexToColor(0x000000),
+	BackgroundColor:      internal.HexToColor(0x000000),
+	FontPath:             "",
+	BackgroundImagePath:  "/mnt/SDCARD/bg.png",
 }
 
 func InitNextUITheme() internal.Theme {
@@ -36,18 +36,24 @@ func InitNextUITheme() internal.Theme {
 	}
 
 	if err != nil {
+		// Enable NextUI mode with default font (RoundedMPlus1C)
+		internal.SetNextUIMode(true, 1)
 		return defaultTheme
 	}
 
+	// Set NextUI mode with font choice from nextval
+	// Font 1 = RoundedMPlus1C, Font 2 = BPreplay
+	internal.SetNextUIMode(true, nv.Font)
+
 	theme := internal.Theme{
-		MainColor:             parseHexColor(nv.Color1),
-		PrimaryAccentColor:    parseHexColor(nv.Color2),
-		SecondaryAccentColor:  parseHexColor(nv.Color3),
-		ListTextColor:         parseHexColor(nv.Color4),
-		ListTextSelectedColor: parseHexColor(nv.Color5),
-		HintInfoColor:         parseHexColor(nv.Color6),
-		BGColor:               parseHexColor(nv.BGColor),
-		FontPath:              nv.FontPath,
+		HighlightColor:       parseHexColor(nv.Color1),
+		AccentColor:          parseHexColor(nv.Color2),
+		ButtonLabelColor:     parseHexColor(nv.Color3),
+		TextColor:            parseHexColor(nv.Color4),
+		HighlightedTextColor: parseHexColor(nv.Color5),
+		HintColor:            parseHexColor(nv.Color6),
+		BackgroundColor:      parseHexColor(nv.BGColor),
+		FontPath:             nv.FontPath,
 	}
 
 	if constants.IsDevMode() {

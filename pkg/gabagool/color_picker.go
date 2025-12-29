@@ -117,10 +117,10 @@ func (h *ColorPicker) draw(renderer *sdl.Renderer) {
 		H: bgRect.H + 4,
 	}
 	renderer.SetDrawColor(
-		internal.GetTheme().PrimaryAccentColor.R,
-		internal.GetTheme().PrimaryAccentColor.G,
-		internal.GetTheme().PrimaryAccentColor.B,
-		internal.GetTheme().PrimaryAccentColor.A,
+		internal.GetTheme().AccentColor.R,
+		internal.GetTheme().AccentColor.G,
+		internal.GetTheme().AccentColor.B,
+		internal.GetTheme().AccentColor.A,
 	)
 	renderer.DrawRect(&borderRect)
 
@@ -181,7 +181,7 @@ func (h *ColorPicker) draw(renderer *sdl.Renderer) {
 		}
 	}
 
-	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, h.StatusBar, internal.UniformPadding(20))
+	renderStatusBar(renderer, internal.Fonts.SmallFont, h.StatusBar, internal.UniformPadding(20))
 }
 
 func (h *ColorPicker) handleKeyPress(key sdl.Keycode) bool {

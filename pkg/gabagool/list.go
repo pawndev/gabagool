@@ -670,7 +670,7 @@ func (lc *listController) renderContent(window *internal.Window, visibleItems []
 		window.RenderBackground()
 	}
 
-	statusBarWidth := calculateStatusBarWidth(internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, lc.Options.StatusBar)
+	statusBarWidth := calculateStatusBarWidth(internal.Fonts.SmallFont, lc.Options.StatusBar)
 
 	if lc.Options.Title != "" {
 		titleFont := internal.Fonts.ExtraLargeFont
@@ -680,7 +680,7 @@ func (lc *listController) renderContent(window *internal.Window, visibleItems []
 		itemStartY = lc.renderScrollableTitle(renderer, titleFont, lc.Options.Title, lc.Options.TitleAlign, lc.StartY, lc.Options.Margins.Left+10, statusBarWidth) + lc.Options.TitleSpacing
 	}
 
-	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, lc.Options.StatusBar, lc.Options.Margins)
+	renderStatusBar(renderer, internal.Fonts.SmallFont, lc.Options.StatusBar, lc.Options.Margins)
 
 	if len(lc.Options.Items) == 0 {
 		lc.renderEmptyMessage(renderer, internal.Fonts.MediumFont, itemStartY)
@@ -824,7 +824,8 @@ func (lc *listController) renderScrollingText(renderer *sdl.Renderer, font *ttf.
 }
 
 func (lc *listController) renderEmptyMessage(renderer *sdl.Renderer, font *ttf.Font, startY int32) {
-	lines := strings.Split(lc.Options.EmptyMessage, "\n")
+	normalized := strings.ReplaceAll(strings.ReplaceAll(lc.Options.EmptyMessage, "\r\n", "\n"), "\r", "\n")
+	lines := strings.Split(normalized, "\n")
 	screenWidth, screenHeight, _ := renderer.GetOutputSize()
 
 	lineHeight := int32(25)
@@ -914,7 +915,7 @@ func (lc *listController) renderSelectedItemImage(renderer *sdl.Renderer, imageF
 }
 
 func (lc *listController) renderScrollableTitle(renderer *sdl.Renderer, font *ttf.Font, title string, align constants.TextAlign, startY, marginLeft, statusBarWidth int32) int32 {
-	surface, _ := font.RenderUTF8Blended(title, internal.GetTheme().ListTextColor)
+	surface, _ := font.RenderUTF8Blended(title, internal.GetTheme().TextColor)
 	if surface == nil {
 		return startY + 40
 	}
@@ -1107,20 +1108,20 @@ func (lc *listController) formatItemText(item MenuItem, multiSelect bool) string
 
 func (lc *listController) getItemColors(item MenuItem) (textColor, bgColor sdl.Color) {
 	if item.Focused && item.Selected {
-		return internal.GetTheme().ListTextSelectedColor, internal.GetTheme().MainColor
+		return internal.GetTheme().HighlightedTextColor, internal.GetTheme().HighlightColor
 	} else if item.Focused {
-		return internal.GetTheme().ListTextSelectedColor, internal.GetTheme().MainColor
+		return internal.GetTheme().HighlightedTextColor, internal.GetTheme().HighlightColor
 	} else if item.Selected {
-		return internal.GetTheme().ListTextColor, sdl.Color{R: 255, G: 0, B: 0, A: 0}
+		return internal.GetTheme().TextColor, sdl.Color{R: 255, G: 0, B: 0, A: 0}
 	}
-	return internal.GetTheme().ListTextColor, sdl.Color{}
+	return internal.GetTheme().TextColor, sdl.Color{}
 }
 
 func (lc *listController) getTextColor(focused bool) sdl.Color {
 	if focused {
-		return internal.GetTheme().ListTextSelectedColor
+		return internal.GetTheme().HighlightedTextColor
 	}
-	return internal.GetTheme().ListTextColor
+	return internal.GetTheme().TextColor
 }
 
 func (lc *listController) filterConfirmButton(items []FooterHelpItem) []FooterHelpItem {

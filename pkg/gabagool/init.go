@@ -52,7 +52,7 @@ func Init(options Options) {
 
 	if options.PrimaryThemeColorHex != 0 && !options.IsNextUI {
 		theme := internal.GetTheme()
-		theme.PrimaryAccentColor = internal.HexToColor(options.PrimaryThemeColorHex)
+		theme.AccentColor = internal.HexToColor(options.PrimaryThemeColorHex)
 		internal.SetTheme(theme)
 	}
 

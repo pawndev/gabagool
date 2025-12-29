@@ -11,3 +11,5 @@ const CloudDownload = "\U000F0162"
 const CloudUpload = "\U000F0167"
 const CloudCheck = "\U000F0160"
 const CloudAlert = "\U000F09E0"
+
+const Download = "\U000F01DA"

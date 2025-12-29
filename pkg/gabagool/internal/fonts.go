@@ -8,11 +8,35 @@ import (
 	"github.com/veandco/go-sdl2/ttf"
 )
 
-//go:embed embedded_fonts/font.ttf
+//go:embed embedded_fonts/SauceCodePro-NerdFont.ttf
 var defaultFont []byte
 
-//go:embed embedded_fonts/SymbolsNerdFont-Regular.ttf
-var symbolFont []byte
+//go:embed embedded_fonts/nextui/RoundedMplus1cNerdFont-Bold.ttf
+var nextUIFont1 []byte
+
+//go:embed embedded_fonts/nextui/BPreplayNerdFont-Bold.ttf
+var nextUIFont2 []byte
+
+// NextUI font configuration
+var (
+	isNextUIMode   bool
+	nextUIFontType int // 1 = RoundedMPlus1C (default), 2 = BPreplay
+)
+
+// SetNextUIMode configures the font system for NextUI mode
+func SetNextUIMode(enabled bool, fontType int) {
+	isNextUIMode = enabled
+	nextUIFontType = fontType
+}
+
+// getNextUIEmbeddedFont returns the appropriate NextUI font based on configuration
+func getNextUIEmbeddedFont() []byte {
+	if nextUIFontType == 2 {
+		return nextUIFont2
+	}
+	// Default to font1 (RoundedMPlus1C)
+	return nextUIFont1
+}
 
 type FontSizes struct {
 	XLarge int `json:"xlarge" yaml:"xlarge"`
@@ -41,12 +65,6 @@ type fontsManager struct {
 	SmallFont      *ttf.Font
 	TinyFont       *ttf.Font
 	MicroFont      *ttf.Font
-
-	LargeSymbolFont  *ttf.Font
-	mediumSymbolFont *ttf.Font
-	SmallSymbolFont  *ttf.Font
-	tinySymbolFont   *ttf.Font
-	microSymbolFont  *ttf.Font
 }
 
 func CalculateFontSizeForResolution(baseSize int, screenWidth int32) int {
@@ -93,12 +111,6 @@ func initFonts(sizes FontSizes) {
 		SmallFont:      loadFont(fontPath, fallback, calcSize(sizes.Small)),
 		TinyFont:       loadFont(fontPath, fallback, calcSize(sizes.Tiny)),
 		MicroFont:      loadFont(fontPath, fallback, calcSize(sizes.Micro)),
-
-		LargeSymbolFont:  loadEmbeddedFont(symbolFont, calcSize(sizes.Large)),
-		mediumSymbolFont: loadEmbeddedFont(symbolFont, calcSize(sizes.Medium)),
-		SmallSymbolFont:  loadEmbeddedFont(symbolFont, calcSize(sizes.Small)),
-		tinySymbolFont:   loadEmbeddedFont(symbolFont, calcSize(sizes.Tiny)),
-		microSymbolFont:  loadEmbeddedFont(symbolFont, calcSize(sizes.Micro)),
 	}
 }
 
@@ -122,6 +134,10 @@ func loadFont(path string, fallback string, size int) *ttf.Font {
 		GetInternalLogger().Debug("Failed to load fallback font, using embedded font", "fallback", fallback, "error", err)
 	}
 
+	// Use NextUI embedded font if in NextUI mode, otherwise default
+	if isNextUIMode {
+		return loadEmbeddedFont(getNextUIEmbeddedFont(), size)
+	}
 	return loadEmbeddedFont(defaultFont, size)
 }
 
@@ -147,10 +163,4 @@ func closeFonts() {
 	Fonts.SmallFont.Close()
 	Fonts.TinyFont.Close()
 	Fonts.MicroFont.Close()
-
-	Fonts.LargeSymbolFont.Close()
-	Fonts.mediumSymbolFont.Close()
-	Fonts.SmallSymbolFont.Close()
-	Fonts.tinySymbolFont.Close()
-	Fonts.microSymbolFont.Close()
 }

@@ -445,12 +445,12 @@ func (s *detailScreenState) render() {
 	footerHeight := int32(30)
 	safeAreaHeight := s.window.GetHeight() - footerHeight
 
-	statusBarWidth := calculateStatusBarWidth(internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, s.options.StatusBar)
+	statusBarWidth := calculateStatusBarWidth(internal.Fonts.SmallFont, s.options.StatusBar)
 
 	currentY := s.renderTitle(margins, statusBarWidth)
 	currentY, totalContentHeight := s.renderSections(margins, currentY, safeAreaHeight)
 
-	renderStatusBar(s.renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, s.options.StatusBar, margins)
+	renderStatusBar(s.renderer, internal.Fonts.SmallFont, s.options.StatusBar, margins)
 
 	s.updateScrollLimits(totalContentHeight, safeAreaHeight, margins)
 	s.renderScrollbar(safeAreaHeight)
@@ -846,7 +846,8 @@ func calculateMultilineTextHeight(text string, font *ttf.Font, maxWidth int32) i
 		return 0
 	}
 
-	lines := strings.Split(text, "\n")
+	normalized := strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\r", "\n")
+	lines := strings.Split(normalized, "\n")
 
 	_, fontHeight, err := font.SizeUTF8("Aj")
 	if err != nil {

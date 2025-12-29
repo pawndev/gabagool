@@ -71,7 +71,6 @@ func DefaultStatusBarOptions() StatusBarOptions {
 // This is used by components to adjust title max width
 func calculateStatusBarWidth(
 	font *ttf.Font,
-	symbolFont *ttf.Font,
 	options StatusBarOptions,
 ) int32 {
 	if !options.Enabled {
@@ -88,7 +87,7 @@ func calculateStatusBarWidth(
 	// Add time width
 	if options.ShowTime {
 		timeText := formatCurrentTime(options.TimeFormat)
-		surface, err := font.RenderUTF8Blended(timeText, internal.GetTheme().MainColor)
+		surface, err := font.RenderUTF8Blended(timeText, internal.GetTheme().HighlightColor)
 		if err == nil && surface != nil {
 			contentWidth += surface.W
 			surface.Free()
@@ -111,7 +110,7 @@ func calculateStatusBarWidth(
 		}
 
 		if text != "" {
-			surface, err := symbolFont.RenderUTF8Blended(text, internal.GetTheme().MainColor)
+			surface, err := font.RenderUTF8Blended(text, internal.GetTheme().HighlightColor)
 			if err == nil && surface != nil {
 				if contentWidth > 0 {
 					contentWidth += iconSpacing
@@ -134,7 +133,6 @@ func calculateStatusBarWidth(
 // without including the pill padding
 func calculateStatusBarContentWidth(
 	font *ttf.Font,
-	symbolFont *ttf.Font,
 	options StatusBarOptions,
 	iconSpacing int32,
 ) int32 {
@@ -143,7 +141,7 @@ func calculateStatusBarContentWidth(
 	// Add time width
 	if options.ShowTime {
 		timeText := formatCurrentTime(options.TimeFormat)
-		surface, err := font.RenderUTF8Blended(timeText, internal.GetTheme().MainColor)
+		surface, err := font.RenderUTF8Blended(timeText, internal.GetTheme().HighlightColor)
 		if err == nil && surface != nil {
 			contentWidth += surface.W
 			surface.Free()
@@ -166,7 +164,7 @@ func calculateStatusBarContentWidth(
 		}
 
 		if text != "" {
-			surface, err := symbolFont.RenderUTF8Blended(text, internal.GetTheme().MainColor)
+			surface, err := font.RenderUTF8Blended(text, internal.GetTheme().HighlightColor)
 			if err == nil && surface != nil {
 				if contentWidth > 0 {
 					contentWidth += iconSpacing
@@ -184,7 +182,6 @@ func calculateStatusBarContentWidth(
 func renderStatusBar(
 	renderer *sdl.Renderer,
 	font *ttf.Font,
-	symbolFont *ttf.Font,
 	options StatusBarOptions,
 	margins internal.Padding,
 ) {
@@ -202,7 +199,7 @@ func renderStatusBar(
 	iconSpacing := int32(float32(8) * scaleFactor)
 
 	// Calculate content width (without pill padding)
-	contentWidth := calculateStatusBarContentWidth(font, symbolFont, options, iconSpacing)
+	contentWidth := calculateStatusBarContentWidth(font, options, iconSpacing)
 	if contentWidth <= 0 {
 		return
 	}
@@ -211,7 +208,7 @@ func renderStatusBar(
 	var contentHeight int32
 	if options.ShowTime {
 		timeText := formatCurrentTime(options.TimeFormat)
-		surface, err := font.RenderUTF8Blended(timeText, internal.GetTheme().MainColor)
+		surface, err := font.RenderUTF8Blended(timeText, internal.GetTheme().AccentColor)
 		if err == nil && surface != nil {
 			contentHeight = surface.H
 			surface.Free()
@@ -232,7 +229,7 @@ func renderStatusBar(
 			text = icon.Text
 		}
 		if text != "" {
-			surface, err := symbolFont.RenderUTF8Blended(text, internal.GetTheme().MainColor)
+			surface, err := font.RenderUTF8Blended(text, internal.GetTheme().AccentColor)
 			if err == nil && surface != nil {
 				if surface.H > contentHeight {
 					contentHeight = surface.H
@@ -250,7 +247,7 @@ func renderStatusBar(
 	// Draw pill background
 	pillRect := &sdl.Rect{X: pillX, Y: pillY, W: pillWidth, H: pillHeight}
 	cornerRadius := pillHeight / 2
-	internal.DrawRoundedRect(renderer, pillRect, cornerRadius, internal.GetTheme().PrimaryAccentColor)
+	internal.DrawRoundedRect(renderer, pillRect, cornerRadius, internal.GetTheme().AccentColor)
 
 	// Content starts inside the pill
 	currentX := pillX + pillWidth - innerPaddingX
@@ -267,7 +264,7 @@ func renderStatusBar(
 	// Icons render right-to-left (last icon closest to time)
 	for i := maxIcons - 1; i >= 0; i-- {
 		icon := options.Icons[i]
-		currentX = renderStatusBarIcon(renderer, symbolFont, icon, currentX, contentY, contentHeight)
+		currentX = renderStatusBarIcon(renderer, font, icon, currentX, contentY, contentHeight)
 		if i > 0 {
 			currentX -= iconSpacing
 		}
@@ -292,7 +289,7 @@ func renderStatusBarTime(
 	timeText string,
 	rightX, y int32,
 ) int32 {
-	textColor := internal.GetTheme().MainColor
+	textColor := internal.GetTheme().HintColor
 
 	surface, err := font.RenderUTF8Blended(timeText, textColor)
 	if err != nil || surface == nil {
@@ -331,7 +328,7 @@ func renderStatusBarIcon(
 		return rightX
 	}
 
-	textColor := internal.GetTheme().MainColor
+	textColor := internal.GetTheme().HintColor
 	surface, err := font.RenderUTF8Blended(text, textColor)
 	if err != nil || surface == nil {
 		return rightX

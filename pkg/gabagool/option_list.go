@@ -844,7 +844,7 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 	selectionRectHeight := int32(float32(60) * scaleFactor)
 	cornerRadius := int32(float32(20) * scaleFactor)
 
-	statusBarWidth := calculateStatusBarWidth(internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, olc.Settings.StatusBar)
+	statusBarWidth := calculateStatusBarWidth(internal.Fonts.SmallFont, olc.Settings.StatusBar)
 
 	if olc.Settings.Title != "" {
 		titleSurface, _ := titleFont.RenderUTF8Blended(olc.Settings.Title, sdl.Color{R: 255, G: 255, B: 255, A: 255})
@@ -880,7 +880,7 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 		}
 	}
 
-	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, olc.Settings.StatusBar, olc.Settings.Margins)
+	renderStatusBar(renderer, internal.Fonts.SmallFont, olc.Settings.StatusBar, olc.Settings.Margins)
 
 	olc.MaxVisibleItems = int(olc.calculateMaxVisibleItems(window))
 
@@ -893,12 +893,12 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 			continue
 		}
 
-		textColor := internal.GetTheme().ListTextColor
+		textColor := internal.GetTheme().TextColor
 		bgColor := sdl.Color{R: 0, G: 0, B: 0, A: 0}
 
 		if item.Item.Selected {
-			textColor = internal.GetTheme().ListTextSelectedColor
-			bgColor = internal.GetTheme().MainColor
+			textColor = internal.GetTheme().HighlightedTextColor
+			bgColor = internal.GetTheme().HighlightColor
 		}
 
 		itemY := olc.StartY + (int32(displayPosition) * itemSpacing)

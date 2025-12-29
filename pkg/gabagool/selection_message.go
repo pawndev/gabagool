@@ -241,7 +241,7 @@ func (c *selectionMessageController) render(renderer *sdl.Renderer, window *inte
 	optionY := startY + maxMessageHeight + spacing
 	c.renderOptions(renderer, centerX, optionY, optionFont)
 
-	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, c.statusBar, internal.UniformPadding(20))
+	renderStatusBar(renderer, internal.Fonts.SmallFont, c.statusBar, internal.UniformPadding(20))
 
 	renderFooter(
 		renderer,
@@ -260,7 +260,8 @@ func (c *selectionMessageController) calculateTextHeight(text string, font *ttf.
 		return 0
 	}
 
-	lines := strings.Split(text, "\n")
+	normalized := strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\r", "\n")
+	lines := strings.Split(normalized, "\n")
 	_, fontHeight, err := font.SizeUTF8("Aj")
 	if err != nil {
 		fontHeight = 20

@@ -26,7 +26,8 @@ func RenderMultilineText(renderer *sdl.Renderer, text string, font *ttf.Font, ma
 		textAlign = alignment[0]
 	}
 
-	paragraphs := strings.Split(text, "\n")
+	normalized := strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\r", "\n")
+	paragraphs := strings.Split(normalized, "\n")
 	var lines []string
 
 	for _, paragraph := range paragraphs {
@@ -139,7 +140,8 @@ func RenderMultilineTextWithCache(
 	lineSpacing := int32(float32(fontHeight) * 0.3)
 	lineY := y
 
-	lines := strings.Split(text, "\n")
+	normalized := strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\r", "\n")
+	lines := strings.Split(normalized, "\n")
 	for _, line := range lines {
 		if line == "" {
 			lineY += int32(fontHeight) + lineSpacing

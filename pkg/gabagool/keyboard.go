@@ -1541,7 +1541,7 @@ func (kb *virtualKeyboard) render(renderer *sdl.Renderer, font *ttf.Font) {
 		kb.renderTextInput(renderer, font)
 		kb.renderKeys(renderer, font)
 		kb.renderSpecialKeys(renderer)
-		renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, kb.StatusBar, internal.UniformPadding(20))
+		renderStatusBar(renderer, internal.Fonts.SmallFont, kb.StatusBar, internal.UniformPadding(20))
 		kb.renderFooter(renderer)
 	}
 
@@ -1736,7 +1736,7 @@ func (kb *virtualKeyboard) renderSpecialKey(renderer *sdl.Renderer, rect sdl.Rec
 	renderer.DrawRect(&rect)
 
 	textColor := sdl.Color{R: 255, G: 255, B: 255, A: 255}
-	textSurface, err := internal.Fonts.LargeSymbolFont.RenderUTF8Blended(symbol, textColor)
+	textSurface, err := internal.Fonts.LargeFont.RenderUTF8Blended(symbol, textColor)
 	if err != nil {
 		return
 	}

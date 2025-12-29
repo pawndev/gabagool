@@ -215,7 +215,7 @@ func renderFrame(renderer *sdl.Renderer, window *internal.Window, settings confi
 			constants.TextAlignCenter)
 	}
 
-	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, settings.StatusBar, settings.Margins)
+	renderStatusBar(renderer, internal.Fonts.SmallFont, settings.StatusBar, settings.Margins)
 
 	renderFooter(
 		renderer,

@@ -5,15 +5,15 @@ import (
 )
 
 type Theme struct {
-	MainColor             sdl.Color
-	PrimaryAccentColor    sdl.Color
-	SecondaryAccentColor  sdl.Color
-	HintInfoColor         sdl.Color
-	ListTextColor         sdl.Color
-	ListTextSelectedColor sdl.Color
-	BGColor               sdl.Color
-	FontPath              string
-	BackgroundImagePath   string
+	HighlightColor       sdl.Color // Color1: Selected item background, footer button background
+	AccentColor          sdl.Color // Color2: Pill backgrounds, status bar pill
+	ButtonLabelColor     sdl.Color // Color3: Button label text (inside pills)
+	TextColor            sdl.Color // Color4: Default text color
+	HighlightedTextColor sdl.Color // Color5: Text on highlighted items
+	HintColor            sdl.Color // Color6: Help text, status bar text
+	BackgroundColor      sdl.Color // BGColor: Screen background
+	FontPath             string
+	BackgroundImagePath  string
 }
 
 var currentTheme Theme
