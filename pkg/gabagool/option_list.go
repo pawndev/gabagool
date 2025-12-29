@@ -3,6 +3,7 @@ package gabagool
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool/constants"
@@ -58,11 +59,17 @@ type OptionListSettings struct {
 // Item is the menu item itself.
 // Options is the list of options for the menu item.
 // SelectedOption is the index of the currently selected option.
+// Visible is an optional function that determines if the item should be shown.
+// If nil, the item is always visible.
+// VisibleWhen is an atomic bool that can be toggled dynamically (e.g., by another option's OnUpdate).
+// If set, it takes precedence over Visible.
 type ItemWithOptions struct {
 	Item           MenuItem
 	Options        []Option
 	SelectedOption int
-	colorPicker    *ColorPicker // New field to store the color picker instance
+	Visible        func() bool  // nil = always visible
+	VisibleWhen    *atomic.Bool // if set, takes precedence over Visible
+	colorPicker    *ColorPicker
 }
 
 func (iow *ItemWithOptions) Value() interface{} {
@@ -71,6 +78,19 @@ func (iow *ItemWithOptions) Value() interface{} {
 	}
 
 	return fmt.Sprintf("%s", iow.Options[iow.SelectedOption].Value)
+}
+
+// IsVisible returns whether the item should be displayed.
+// If VisibleWhen is set, it takes precedence.
+// Otherwise, returns true if Visible is nil or if Visible() returns true.
+func (iow *ItemWithOptions) IsVisible() bool {
+	if iow.VisibleWhen != nil {
+		return iow.VisibleWhen.Load()
+	}
+	if iow.Visible == nil {
+		return true
+	}
+	return iow.Visible()
 }
 
 // OptionsListResult represents the return value of the OptionsList function.
@@ -156,6 +176,16 @@ func newOptionsListController(title string, items []ItemWithOptions) *optionsLis
 		if item.Item.Selected {
 			selectedIndex = i
 			break
+		}
+	}
+
+	// Ensure selected item is visible; if not, find first visible item
+	if len(items) > 0 && !items[selectedIndex].IsVisible() {
+		for i := range items {
+			if items[i].IsVisible() {
+				selectedIndex = i
+				break
+			}
 		}
 	}
 
@@ -629,23 +659,37 @@ func (olc *optionsListController) moveSelection(direction int) {
 		return
 	}
 
+	startIndex := olc.SelectedIndex
 	olc.Items[olc.SelectedIndex].Item.Selected = false
 
-	if direction > 0 {
-		olc.SelectedIndex++
-		if olc.SelectedIndex >= len(olc.Items) {
-			olc.SelectedIndex = 0
-			olc.VisibleStartIndex = 0
-		}
-	} else {
-		olc.SelectedIndex--
-		if olc.SelectedIndex < 0 {
-			olc.SelectedIndex = len(olc.Items) - 1
-			if len(olc.Items) > olc.MaxVisibleItems {
-				olc.VisibleStartIndex = len(olc.Items) - olc.MaxVisibleItems
-			} else {
+	// Find next visible item in the given direction
+	for {
+		if direction > 0 {
+			olc.SelectedIndex++
+			if olc.SelectedIndex >= len(olc.Items) {
+				olc.SelectedIndex = 0
 				olc.VisibleStartIndex = 0
 			}
+		} else {
+			olc.SelectedIndex--
+			if olc.SelectedIndex < 0 {
+				olc.SelectedIndex = len(olc.Items) - 1
+				if len(olc.Items) > olc.MaxVisibleItems {
+					olc.VisibleStartIndex = len(olc.Items) - olc.MaxVisibleItems
+				} else {
+					olc.VisibleStartIndex = 0
+				}
+			}
+		}
+
+		// If item is visible, we found our target
+		if olc.Items[olc.SelectedIndex].IsVisible() {
+			break
+		}
+
+		// If we've wrapped around to start, no visible items exist
+		if olc.SelectedIndex == startIndex {
+			break
 		}
 	}
 
@@ -839,11 +883,15 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 	renderStatusBar(renderer, internal.Fonts.SmallFont, internal.Fonts.SmallSymbolFont, olc.Settings.StatusBar, olc.Settings.Margins)
 
 	olc.MaxVisibleItems = int(olc.calculateMaxVisibleItems(window))
-	visibleCount := min(olc.MaxVisibleItems, len(olc.Items)-olc.VisibleStartIndex)
 
-	for i := 0; i < visibleCount; i++ {
-		itemIndex := i + olc.VisibleStartIndex
+	displayPosition := 0
+	for itemIndex := olc.VisibleStartIndex; itemIndex < len(olc.Items) && displayPosition < olc.MaxVisibleItems; itemIndex++ {
 		item := olc.Items[itemIndex]
+
+		// Skip hidden items
+		if !item.IsVisible() {
+			continue
+		}
 
 		textColor := internal.GetTheme().ListTextColor
 		bgColor := sdl.Color{R: 0, G: 0, B: 0, A: 0}
@@ -853,7 +901,7 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 			bgColor = internal.GetTheme().MainColor
 		}
 
-		itemY := olc.StartY + (int32(i) * itemSpacing)
+		itemY := olc.StartY + (int32(displayPosition) * itemSpacing)
 
 		if item.Item.Selected {
 			selectionRect := &sdl.Rect{
@@ -1009,6 +1057,8 @@ func (olc *optionsListController) render(renderer *sdl.Renderer) {
 				}
 			}
 		}
+
+		displayPosition++
 	}
 
 	renderFooter(
