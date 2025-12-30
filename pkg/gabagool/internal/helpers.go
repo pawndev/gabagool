@@ -298,17 +298,17 @@ func DrawSmoothScrollbar(renderer *sdl.Renderer, x, y, width, height int32, colo
 	renderer.FillRect(&sdl.Rect{X: x, Y: y, W: width, H: height})
 }
 
-// DrawSmoothProgressBar renders a progress bar with smooth rounded edges
+// DrawSmoothProgressBar renders a rectangular progress bar
 func DrawSmoothProgressBar(renderer *sdl.Renderer, bgRect *sdl.Rect, fillWidth int32, bgColor, fillColor sdl.Color) {
 	if bgRect == nil {
 		return
 	}
 
-	// Draw background with rounded corners
-	radius := bgRect.H / 2
-	DrawRoundedRect(renderer, bgRect, radius, bgColor)
+	// Draw background rectangle
+	renderer.SetDrawColor(bgColor.R, bgColor.G, bgColor.B, bgColor.A)
+	renderer.FillRect(bgRect)
 
-	// Draw fill with rounded corners if there's progress
+	// Draw fill rectangle if there's progress
 	if fillWidth > 0 && fillWidth <= bgRect.W {
 		fillRect := &sdl.Rect{
 			X: bgRect.X,
@@ -316,13 +316,8 @@ func DrawSmoothProgressBar(renderer *sdl.Renderer, bgRect *sdl.Rect, fillWidth i
 			W: Min32(fillWidth, bgRect.W),
 			H: bgRect.H,
 		}
-		// Cap the fill radius to prevent it from being wider than the fill width
-		fillRadius := radius
-		if fillWidth < bgRect.H {
-			// When fill is narrower than the bar height, use half the fill width as radius
-			fillRadius = fillWidth / 2
-		}
-		DrawRoundedRect(renderer, fillRect, fillRadius, fillColor)
+		renderer.SetDrawColor(fillColor.R, fillColor.G, fillColor.B, fillColor.A)
+		renderer.FillRect(fillRect)
 	}
 }
 
