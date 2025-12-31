@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/BrandonKowalski/gabagool/v2/pkg/gabagool/constants"
 	"github.com/veandco/go-sdl2/sdl"
@@ -31,6 +32,39 @@ type Event struct {
 	Pressed bool
 	Source  Source
 	RawCode int
+}
+
+// ComboType distinguishes between chord and sequence combinations
+type ComboType int
+
+const (
+	ComboTypeChord ComboType = iota
+	ComboTypeSequence
+)
+
+// ComboEvent represents a triggered button combination
+type ComboEvent struct {
+	ComboID   string                    // Unique identifier for the combo
+	ComboType ComboType                 // Chord or Sequence
+	Buttons   []constants.VirtualButton // Buttons involved in the combo
+	Triggered bool                      // true on activation, false on release (chords only)
+}
+
+// ComboCallback is called when a combo is triggered or released
+type ComboCallback func()
+
+// ChordOptions configures chord detection behavior
+type ChordOptions struct {
+	Window    time.Duration // Time window for simultaneous press (default: 100ms)
+	OnTrigger ComboCallback // Called when the chord is activated (all buttons pressed)
+	OnRelease ComboCallback // Called when the chord is released (any button released)
+}
+
+// SequenceOptions configures sequence detection behavior
+type SequenceOptions struct {
+	Timeout   time.Duration // Max time between sequence inputs (default: 500ms)
+	Strict    bool          // If true, sequence breaks on any non-sequence button
+	OnTrigger ComboCallback // Called when the sequence is completed
 }
 
 type JoystickAxisMapping struct {
@@ -82,22 +116,26 @@ func DefaultInputMapping() *InputMapping {
 			sdl.K_b:      constants.VirtualButtonB,
 			sdl.K_x:      constants.VirtualButtonX,
 			sdl.K_y:      constants.VirtualButtonY,
+			sdl.K_l:      constants.VirtualButtonL1,
+			sdl.K_r:      constants.VirtualButtonR1,
 			sdl.K_RETURN: constants.VirtualButtonStart,
 			sdl.K_SPACE:  constants.VirtualButtonSelect,
 			sdl.K_h:      constants.VirtualButtonMenu,
 		},
 		ControllerButtonMap: map[sdl.GameControllerButton]constants.VirtualButton{
-			sdl.CONTROLLER_BUTTON_DPAD_UP:    constants.VirtualButtonUp,
-			sdl.CONTROLLER_BUTTON_DPAD_DOWN:  constants.VirtualButtonDown,
-			sdl.CONTROLLER_BUTTON_DPAD_LEFT:  constants.VirtualButtonLeft,
-			sdl.CONTROLLER_BUTTON_DPAD_RIGHT: constants.VirtualButtonRight,
-			sdl.CONTROLLER_BUTTON_A:          constants.VirtualButtonB,
-			sdl.CONTROLLER_BUTTON_B:          constants.VirtualButtonA,
-			sdl.CONTROLLER_BUTTON_X:          constants.VirtualButtonY,
-			sdl.CONTROLLER_BUTTON_Y:          constants.VirtualButtonX,
-			sdl.CONTROLLER_BUTTON_START:      constants.VirtualButtonStart,
-			sdl.CONTROLLER_BUTTON_BACK:       constants.VirtualButtonSelect,
-			sdl.CONTROLLER_BUTTON_GUIDE:      constants.VirtualButtonMenu,
+			sdl.CONTROLLER_BUTTON_DPAD_UP:       constants.VirtualButtonUp,
+			sdl.CONTROLLER_BUTTON_DPAD_DOWN:     constants.VirtualButtonDown,
+			sdl.CONTROLLER_BUTTON_DPAD_LEFT:     constants.VirtualButtonLeft,
+			sdl.CONTROLLER_BUTTON_DPAD_RIGHT:    constants.VirtualButtonRight,
+			sdl.CONTROLLER_BUTTON_A:             constants.VirtualButtonB,
+			sdl.CONTROLLER_BUTTON_B:             constants.VirtualButtonA,
+			sdl.CONTROLLER_BUTTON_X:             constants.VirtualButtonY,
+			sdl.CONTROLLER_BUTTON_Y:             constants.VirtualButtonX,
+			sdl.CONTROLLER_BUTTON_LEFTSHOULDER:  constants.VirtualButtonL1,
+			sdl.CONTROLLER_BUTTON_RIGHTSHOULDER: constants.VirtualButtonR1,
+			sdl.CONTROLLER_BUTTON_START:         constants.VirtualButtonStart,
+			sdl.CONTROLLER_BUTTON_BACK:          constants.VirtualButtonSelect,
+			sdl.CONTROLLER_BUTTON_GUIDE:         constants.VirtualButtonMenu,
 		},
 	}
 }

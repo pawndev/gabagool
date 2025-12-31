@@ -25,6 +25,7 @@ type ProcessMessageOptions struct {
 	ShowThemeBackground bool
 	ShowProgressBar     bool
 	Progress            *atomic.Float64
+	ProcessInput        bool // If true, process input events (enables chord/sequence detection)
 }
 
 type processMessage struct {
@@ -112,9 +113,14 @@ func ProcessMessage[T any](message string, options ProcessMessageOptions, fn fun
 
 	for running {
 		if event := sdl.WaitEventTimeout(16); event != nil {
-			if _, ok := event.(*sdl.QuitEvent); ok {
+			switch event.(type) {
+			case *sdl.QuitEvent:
 				running = false
 				quitErr = sdl.GetError()
+			case *sdl.KeyboardEvent, *sdl.ControllerButtonEvent, *sdl.ControllerAxisEvent, *sdl.JoyButtonEvent, *sdl.JoyAxisEvent, *sdl.JoyHatEvent:
+				if options.ProcessInput {
+					internal.GetInputProcessor().ProcessSDLEvent(event)
+				}
 			}
 		}
 
