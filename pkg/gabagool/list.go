@@ -46,6 +46,8 @@ type ListOptions struct {
 	ActionButton          constants.VirtualButton
 	SecondaryActionButton constants.VirtualButton
 	HelpButton            constants.VirtualButton
+	SelectAllButton       constants.VirtualButton
+	DeselectAllButton     constants.VirtualButton
 
 	EmptyMessage      string
 	EmptyMessageColor sdl.Color
@@ -72,6 +74,8 @@ func DefaultListOptions(title string, items []MenuItem) ListOptions {
 		ActionButton:          constants.VirtualButtonUnassigned,
 		SecondaryActionButton: constants.VirtualButtonUnassigned,
 		HelpButton:            constants.VirtualButtonUnassigned,
+		SelectAllButton:       constants.VirtualButtonUnassigned,
+		DeselectAllButton:     constants.VirtualButtonUnassigned,
 		EmptyMessage:          "No items available",
 		EmptyMessageColor:     sdl.Color{R: 255, G: 255, B: 255, A: 255},
 		StatusBar:             DefaultStatusBarOptions(),
@@ -395,6 +399,16 @@ func (lc *listController) handleActionButtons(button constants.VirtualButton, ru
 		!lc.Options.Items[lc.Options.SelectedIndex].NotReorderable {
 		lc.ReorderMode = !lc.ReorderMode
 	}
+
+	if lc.Options.SelectAllButton != constants.VirtualButtonUnassigned &&
+		button == lc.Options.SelectAllButton && lc.MultiSelect && len(lc.Options.Items) > 0 {
+		lc.selectAll()
+	}
+
+	if lc.Options.DeselectAllButton != constants.VirtualButtonUnassigned &&
+		button == lc.Options.DeselectAllButton && lc.MultiSelect && len(lc.Options.Items) > 0 {
+		lc.deselectAll()
+	}
 }
 
 func (lc *listController) navigate(direction string) {
@@ -583,6 +597,22 @@ func (lc *listController) toggleSelection(index int) {
 	} else {
 		delete(lc.SelectedItems, index)
 	}
+}
+
+func (lc *listController) selectAll() {
+	for i := range lc.Options.Items {
+		if !lc.Options.Items[i].NotMultiSelectable {
+			lc.Options.Items[i].Selected = true
+			lc.SelectedItems[i] = true
+		}
+	}
+}
+
+func (lc *listController) deselectAll() {
+	for i := range lc.Options.Items {
+		lc.Options.Items[i].Selected = false
+	}
+	lc.SelectedItems = make(map[int]bool)
 }
 
 func (lc *listController) updateSelectionState() {
