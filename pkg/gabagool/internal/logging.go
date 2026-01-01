@@ -35,8 +35,13 @@ func setup() {
 			panic("Failed to create logs directory: " + err.Error())
 		}
 
+		filename := logFilename
+		if filename == "" {
+			filename = "app.log"
+		}
+
 		var err error
-		logFile, err = os.OpenFile(filepath.Join("logs", logFilename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		logFile, err = os.OpenFile(filepath.Join("logs", filename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			panic("Failed to open log file: " + err.Error())
 		}

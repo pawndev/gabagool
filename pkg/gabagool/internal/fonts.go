@@ -96,7 +96,6 @@ func GetScaleFactor() float32 {
 
 func initFonts(sizes FontSizes) {
 	screenWidth := GetWindow().GetWidth()
-	fontPath := GetTheme().FontPath
 	fallback := os.Getenv("FALLBACK_FONT")
 
 	// Calculate all sizes
@@ -105,26 +104,18 @@ func initFonts(sizes FontSizes) {
 	}
 
 	Fonts = fontsManager{
-		ExtraLargeFont: loadFont(fontPath, fallback, calcSize(sizes.XLarge)),
-		LargeFont:      loadFont(fontPath, fallback, calcSize(sizes.Large)),
-		MediumFont:     loadFont(fontPath, fallback, calcSize(sizes.Medium)),
-		SmallFont:      loadFont(fontPath, fallback, calcSize(sizes.Small)),
-		TinyFont:       loadFont(fontPath, fallback, calcSize(sizes.Tiny)),
-		MicroFont:      loadFont(fontPath, fallback, calcSize(sizes.Micro)),
+		ExtraLargeFont: loadFont(fallback, calcSize(sizes.XLarge)),
+		LargeFont:      loadFont(fallback, calcSize(sizes.Large)),
+		MediumFont:     loadFont(fallback, calcSize(sizes.Medium)),
+		SmallFont:      loadFont(fallback, calcSize(sizes.Small)),
+		TinyFont:       loadFont(fallback, calcSize(sizes.Tiny)),
+		MicroFont:      loadFont(fallback, calcSize(sizes.Micro)),
 	}
 }
 
-func loadFont(path string, fallback string, size int) *ttf.Font {
+func loadFont(fallback string, size int) *ttf.Font {
 	var font *ttf.Font
 	var err error
-
-	if path != "" {
-		font, err = ttf.OpenFont(path, size)
-		if err == nil {
-			return font
-		}
-		GetInternalLogger().Debug("Failed to load theme font, trying fallback", "path", path, "error", err)
-	}
 
 	if fallback != "" {
 		font, err = ttf.OpenFont(fallback, size)
