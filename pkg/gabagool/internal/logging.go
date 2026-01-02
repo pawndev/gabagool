@@ -25,7 +25,7 @@ var (
 	internalLevelVar   *slog.LevelVar
 )
 
-func SetFilename(filename string) {
+func SetLogFilename(filename string) {
 	logFilename = filename
 }
 

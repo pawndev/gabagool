@@ -23,7 +23,9 @@ type Options struct {
 // Init initializes SDL and the UI
 // Must be called before any other UI functions!
 func Init(options Options) {
-	internal.SetFilename(options.LogFilename)
+	if options.LogFilename != "" {
+		internal.SetLogFilename(options.LogFilename)
+	}
 
 	if os.Getenv("NITRATES") != "" || os.Getenv("INPUT_CAPTURE") != "" {
 		internal.SetInternalLogLevel(slog.LevelDebug)
@@ -74,6 +76,10 @@ func Init(options Options) {
 // Must be called after all UI functions!
 func Close() {
 	internal.SDLCleanup()
+}
+
+func SetLogFilename(filename string) {
+	internal.SetLogFilename(filename)
 }
 
 func GetLogger() *slog.Logger {
